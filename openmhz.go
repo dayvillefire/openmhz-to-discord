@@ -77,13 +77,13 @@ func poll(channel string, after time.Time) ([]Call, error) {
 
 	finalC := make([]Call, 0)
 	for _, v := range c.Calls {
-		if v.Timestamp.After(after) {
+		if v.Timestamp.Local().After(after.Local()) {
+			log.Printf("DEBUG: %s is after %s", v.Timestamp.Local().String(), after.Local().String())
 			finalC = append(finalC, v)
 		}
 	}
 
-	log.Printf("INFO: Found %d calls after %s", len(finalC), after.String())
-
+	log.Printf("INFO: Found %d calls after %s", len(finalC), after.Local().String())
 	return finalC, nil
 }
 
@@ -112,10 +112,10 @@ func getTempFile(url string) (string, error) {
 }
 
 func tsFromCalls(c []Call) time.Time {
-	ts := time.Now().Add(time.Hour * -time.Duration(24))
+	ts := time.Now().Local()
 	for _, v := range c {
-		if v.Timestamp.After(ts) {
-			ts = v.Timestamp
+		if v.Timestamp.Local().After(ts) {
+			ts = v.Timestamp.Local()
 		}
 	}
 	return ts

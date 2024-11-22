@@ -50,7 +50,9 @@ func main() {
 	}
 
 	// Initial poll
-	calls, err := poll(*openmhzChannel, time.Now().Add(time.Hour))
+	initialTime := time.Now().Local()
+	log.Printf("INFO: Starting polling after %s", initialTime)
+	calls, err := poll(*openmhzChannel, initialTime)
 	if err != nil {
 		log.Printf("ERROR: %s", err.Error())
 		return
@@ -59,11 +61,37 @@ func main() {
 	// Starting timestamp
 	ts := tsFromCalls(calls)
 	done := false
+	log.Printf("INFO: Starting on calls after %s", ts.Local().String())
 
+	go func() {
+		log.Printf("INFO: Entering playback loop")
+		for {
+			consumeQueue(func(c Call) {
+				fn, err := getTempFile(c.URL)
+				if err != nil {
+					log.Printf("ERR: getTempFile: %s", err.Error())
+					return
+				}
+				log.Printf("INFO: Play %s", fn)
+				ds.Play(fn)
+				log.Printf("INFO: Sleeping for duration of file %d seconds", c.Length)
+				time.Sleep(time.Duration(c.Length) * time.Second)
+				os.Remove(fn)
+			})
+
+			if done {
+				log.Printf("INFO: Exiting play loop")
+				return
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+	}()
+
+	log.Printf("INFO: Beginning poll loop")
 	for !done {
 		time.Sleep(time.Second * time.Duration(*pollingInterval))
 		// Poll for calls
-		calls, err = poll(*openmhzChannel, ts)
+		calls, err = poll(*openmhzChannel, ts.Local())
 		if len(calls) == 0 {
 			log.Printf("INFO: No calls, going back to wait loop")
 			continue
@@ -74,21 +102,8 @@ func main() {
 		sort.Sort(ByTS(calls))
 		// Play calls in channel
 		for _, v := range calls {
-			fn, err := getTempFile(v.URL)
-			if err != nil {
-				log.Printf("ERR: getTempFile: %s", err.Error())
-				continue
-			}
-
-			// TODO: FIXME: IMPLEMENT: XXX: Move this to another thread and queue items so as not to block this thread
-
-			log.Printf("INFO: Play %s", fn)
-			ds.Play(fn)
-			log.Printf("INFO: Sleeping for duration of file %d seconds", v.Length)
-			time.Sleep(time.Duration(v.Length) * time.Second)
-			os.Remove(fn)
+			enqueueItem(v)
 		}
-		//log.Printf("%#v", calls)
 	}
 
 	// Close connections
