@@ -1,0 +1,11 @@
+version: '3.5'
+
+services:
+  openmhz-to-discord:
+    container_name: openmhz-to-discord
+    image: jbuchbinder/openmhz-to-discord
+    restart: always
+    volumes:
+      - .env:/.env:ro
+    env_file:
+      - .env
