@@ -74,8 +74,8 @@ func main() {
 				}
 				log.Printf("INFO: Play %s", fn)
 				ds.Play(fn)
-				log.Printf("INFO: Sleeping for duration of file %d seconds", c.Length)
-				time.Sleep(time.Duration(c.Length) * time.Second)
+				//log.Printf("INFO: Sleeping for duration of file %d seconds", c.Length)
+				//time.Sleep(time.Duration(c.Length) * time.Second)
 				os.Remove(fn)
 			})
 

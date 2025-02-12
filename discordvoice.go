@@ -44,7 +44,9 @@ func (d *DiscordVoice) Init(token, guild, channel string) error {
 }
 
 func (d *DiscordVoice) Play(filepath string) {
-	dgvoice.PlayAudioFile(d.dgv, filepath, make(chan bool))
+	ch := make(chan bool)
+	dgvoice.PlayAudioFile(d.dgv, filepath, ch)
+	<-ch
 }
 
 func (d *DiscordVoice) Close() {
