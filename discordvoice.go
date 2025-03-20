@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
+	"github.com/dayvillefire/dgvoice"
 )
 
 type DiscordVoice struct {
