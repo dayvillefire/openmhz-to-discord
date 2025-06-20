@@ -16,6 +16,7 @@ var (
 	guild           = flag.String("guild", "", "Guild ID")
 	channel         = flag.String("channel", "", "Channel ID")
 	openmhzChannel  = flag.String("omhz", "", "OpenMHZ Channel ID")
+	openmhzParams   = flag.String("omhzparams", "", "OpenMHZ URL params (everything after ?)")
 	pollingInterval = flag.Int("poll-interval", 0, "Polling interval")
 )
 
@@ -38,6 +39,9 @@ func main() {
 	if *openmhzChannel == "" {
 		*openmhzChannel = os.Getenv("OPENMHZ_CHANNEL")
 	}
+	if *openmhzParams == "" {
+		*openmhzParams = os.Getenv("OPENMHZ_PARAMS")
+	}
 	if *pollingInterval == 0 {
 		*pollingInterval, _ = strconv.Atoi(os.Getenv("OPENMHZ_POLLING_INTERVAL"))
 	}
@@ -52,7 +56,7 @@ func main() {
 	// Initial poll
 	initialTime := time.Now().Local()
 	log.Printf("INFO: Starting polling after %s", initialTime)
-	calls, err := poll(*openmhzChannel, initialTime)
+	calls, err := poll(*openmhzChannel, *openmhzParams, initialTime)
 	if err != nil {
 		log.Printf("ERROR: %s", err.Error())
 		return
@@ -91,7 +95,7 @@ func main() {
 	for !done {
 		time.Sleep(time.Second * time.Duration(*pollingInterval))
 		// Poll for calls
-		calls, err = poll(*openmhzChannel, ts.Local())
+		calls, err = poll(*openmhzChannel, *openmhzParams, ts.Local())
 		if len(calls) == 0 {
 			log.Printf("INFO: No calls, going back to wait loop")
 			continue

@@ -33,14 +33,16 @@ func (a ByTS) Len() int           { return len(a) }
 func (a ByTS) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByTS) Less(i, j int) bool { return a[i].Timestamp.Before(a[j].Timestamp) }
 
-func poll(channel string, after time.Time) ([]Call, error) {
+func poll(channel string, params string, after time.Time) ([]Call, error) {
 	tr := &http2.Transport{
 		//MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.openmhz.com/%s/calls?", channel), nil)
+	var req *http.Request
+	var err error
+	req, err = http.NewRequest("GET", fmt.Sprintf("https://api.openmhz.com/%s/calls?%s", channel, params), nil)
 	if err != nil {
 		return []Call{}, err
 	}
