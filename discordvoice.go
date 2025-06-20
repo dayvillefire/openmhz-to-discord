@@ -12,13 +12,16 @@ type DiscordVoice struct {
 	discordSession *discordgo.Session
 	discordInit    bool
 	dgv            *discordgo.VoiceConnection
+	internal       bool
 }
 
-func (d *DiscordVoice) Init(token, guild, channel string) error {
+func (d *DiscordVoice) Init(token, guild, channel string, internal bool) error {
 	var err error
 	if d.discordInit {
 		return fmt.Errorf("ERR: already intiialized: %w", err)
 	}
+
+	d.internal = internal
 
 	d.discordSession, err = discordgo.New("Bot " + token)
 	if err != nil {
@@ -45,7 +48,14 @@ func (d *DiscordVoice) Init(token, guild, channel string) error {
 
 func (d *DiscordVoice) Play(filepath string) {
 	ch := make(chan bool)
-	dgvoice.PlayAudioFile(d.dgv, filepath, ch)
+	if d.internal {
+		log.Printf("INFO: Playing audio file internally: %s", filepath)
+		go dgvoice.PlayAudioFileInternal(d.dgv, filepath, ch)
+	} else {
+		log.Printf("INFO: Playing audio file externally: %s", filepath)
+		go dgvoice.PlayAudioFile(d.dgv, filepath, ch)
+	}
+	log.Printf("INFO: Waiting for stop signal")
 	<-ch
 }
 

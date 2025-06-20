@@ -44,7 +44,7 @@ func main() {
 
 	ds := DiscordVoice{}
 	log.Printf("INFO: Init with token")
-	err = ds.Init(*token, *guild, *channel)
+	err = ds.Init(*token, *guild, *channel, true)
 	if err != nil {
 		panic(err)
 	}
