@@ -12,12 +12,16 @@ import (
 )
 
 var (
-	token           = flag.String("token", "", "Discord API token")
-	guild           = flag.String("guild", "", "Guild ID")
-	channel         = flag.String("channel", "", "Channel ID")
-	openmhzChannel  = flag.String("omhz", "", "OpenMHZ Channel ID")
-	openmhzParams   = flag.String("omhzparams", "", "OpenMHZ URL params (everything after ?)")
-	pollingInterval = flag.Int("poll-interval", 0, "Polling interval")
+	token             = flag.String("token", "", "Discord API token")
+	guild             = flag.String("guild", "", "Guild ID")
+	channel           = flag.String("channel", "", "Channel ID")
+	openmhzChannel    = flag.String("omhz", "", "OpenMHZ Channel ID")
+	openmhzParams     = flag.String("omhzparams", "", "OpenMHZ URL params (everything after ?)")
+	whisperServerUrl  = flag.String("whisper-server-url", "", "Whisper Server URL")
+	channelTranscribe = flag.String("whisper-channel", "", "Whisper Discord channel")
+	pollingInterval   = flag.Int("poll-interval", 0, "Polling interval")
+
+	ds DiscordVoice
 )
 
 func main() {
@@ -45,8 +49,14 @@ func main() {
 	if *pollingInterval == 0 {
 		*pollingInterval, _ = strconv.Atoi(os.Getenv("OPENMHZ_POLLING_INTERVAL"))
 	}
+	if *whisperServerUrl == "" {
+		*whisperServerUrl = os.Getenv("WHISPER_SERVER_URL")
+	}
+	if *channelTranscribe == "" {
+		*channelTranscribe = os.Getenv("WHISPER_DISCORD_CHANNEL")
+	}
 
-	ds := DiscordVoice{}
+	ds = DiscordVoice{}
 	log.Printf("INFO: Init with token")
 	err = ds.Init(*token, *guild, *channel, true)
 	if err != nil {
@@ -76,6 +86,12 @@ func main() {
 					log.Printf("ERR: getTempFile: %s", err.Error())
 					return
 				}
+
+				// Start transcribe, if present
+				if *whisperServerUrl != "" {
+					go whisper(c, fn)
+				}
+
 				log.Printf("INFO: Play %s", fn)
 				ds.Play(fn)
 				//log.Printf("INFO: Sleeping for duration of file %d seconds", c.Length)
