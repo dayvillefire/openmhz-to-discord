@@ -1,0 +1,31 @@
+version: '3.5'
+
+services:
+  openmhz-to-discord:
+    container_name: openmhz-to-discord
+    image: jbuchbinder/openmhz-to-discord
+    restart: unless-stopped
+    volumes:
+      - .env:/.env:ro
+      # Debian/Ubuntu: libasound
+      - /usr/lib/x86_64-linux-gnu/libasound.so.2:/usr/lib/libasound.so.2:ro
+      # Debian/Ubuntu: libmpg123-0
+      - /usr/lib/x86_64-linux-gnu/libmpg123.so.0:/usr/lib/libmpg123.so.0:ro
+    env_file:
+      - .env
+    depends_on:
+      - whisper-server
+
+  whisper-server:
+    container_name: whisper-server
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    restart: unless-stopped
+    environment:
+      - ASR_MODEL=small
+      - ASR_ENGINE=faster_whisper
+      - ASR_DEVICE=cpu
+    volumes:
+      - ./cache:/root/.cache
+    ports:
+      - 10300:9000
+
