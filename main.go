@@ -21,6 +21,7 @@ var (
 	channelTranscribe = flag.String("whisper-channel", "", "Whisper Discord channel")
 	pollingInterval   = flag.Int("poll-interval", 0, "Polling interval")
 	locale            = flag.String("locale", "UTC", "Timezone locale")
+	fakeTalkgroups    = flag.Bool("fake-talkgroups", false, "Fake talkgroup request")
 
 	ds DiscordVoice
 	tg map[int]string
@@ -60,6 +61,9 @@ func main() {
 	if *locale == "" {
 		*locale = os.Getenv("LOCALE")
 	}
+	if !*fakeTalkgroups {
+		*fakeTalkgroups, _ = strconv.ParseBool(os.Getenv("FAKE_TALKGROUPS"))
+	}
 
 	loc, err := time.LoadLocation(*locale)
 	if err != nil {
@@ -75,7 +79,7 @@ func main() {
 	}
 
 	// Pull talkgroups
-	tg, err = talkgroups(*openmhzChannel)
+	tg, err = talkgroups(*openmhzChannel, *fakeTalkgroups)
 	if err != nil {
 		panic(err)
 	}
